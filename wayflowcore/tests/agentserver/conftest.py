@@ -5,6 +5,7 @@
 # (UPL) 1.0 (LICENSE-UPL or https://oss.oracle.com/licenses/upl), at your option.
 import os
 import subprocess
+import sys
 import tempfile
 import time
 from dataclasses import asdict
@@ -27,6 +28,7 @@ from ..datastores.conftest import (
     all_postgres_connection_config_env_variables_are_specified,
     get_postgres_connection_config,
 )
+from ..env_utils import get_env_or_raise, should_skip_datastore_test, should_skip_llm_test
 from ..utils import LogTee, _terminate_process_tree, get_available_port
 from .datastore_agent_server import ORACLE_DB_CREATE_DDL, ORACLE_DB_DELETE_DDL
 
@@ -172,7 +174,9 @@ def register_wayflow_server_fixture(
     ] = None,
 ):
     def _fixture(request):
-        llama_endpoint = os.environ.get("LLAMA_API_URL")
+        llama_endpoint = get_env_or_raise("LLAMA_API_URL", skip_check=should_skip_llm_test)
+        if llama_endpoint == "skipped":
+            pytest.skip("Skipping because LLAMA_API_URL is missing")
         new_agent_files = []
         for agent_config in agent_configs:
             agent_config_content = Path(agent_config).read_text()
@@ -269,9 +273,11 @@ wayflow_server_http_oracle = register_wayflow_server_fixture(
 
 @pytest.fixture(scope="session")
 def multi_agent_inmemory_server():
+    if should_skip_llm_test():
+        pytest.skip("Skipping multi-agent server tests because LLM_API_URL is missing")
     available_port = get_available_port()
     print(f"Starting a multi-agent server on port {available_port}")
-    cmd = ["python", str(TEST_DIR / "multi_agent_server.py"), "--port", str(available_port)]
+    cmd = [sys.executable, str(TEST_DIR / "multi_agent_server.py"), "--port", str(available_port)]
     url = f"http://127.0.0.1:{available_port}"
 
     process, url, tee = _run_server(url, cmd, timeout=20)
@@ -284,6 +290,8 @@ def multi_agent_inmemory_server():
 
 @pytest.fixture(scope="session")
 def oracle_db_with_names():
+    if should_skip_datastore_test():
+        pytest.skip("Skipping datastore tests via env var")
     if not all_oracle_tls_connection_config_env_variables_are_specified():
         pytest.skip("Oracle DB not configured")
     connection_config = get_oracle_connection_config()
@@ -297,9 +305,16 @@ def oracle_db_with_names():
 
 @pytest.fixture(scope="session")
 def datastore_agent_inmemory_server(oracle_db_with_names):
+    if should_skip_llm_test():
+        pytest.skip("Skipping datastore agent server tests because LLM_API_URL is missing")
     available_port = get_available_port()
     print(f"Starting datastore agent server on port {available_port}")
-    cmd = ["python", str(TEST_DIR / "datastore_agent_server.py"), "--port", str(available_port)]
+    cmd = [
+        sys.executable,
+        str(TEST_DIR / "datastore_agent_server.py"),
+        "--port",
+        str(available_port),
+    ]
     url = f"http://127.0.0.1:{available_port}"
 
     process, url, tee = _run_server(url, cmd, timeout=20)

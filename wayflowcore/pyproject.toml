@@ -7,3 +7,34 @@ requires = [
     "setuptools-scm == 7.1.0",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+strict = true
+disable_error_code = [
+    "type-abstract",  # https://stackoverflow.com/questions/48349054/how-do-you-annotate-the-type-of-an-abstract-class-with-mypy
+]
+plugins = ['pydantic.mypy']
+
+[[tool.mypy.overrides]]
+module = [
+    'tests.*',
+    'setup'
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    'jq.*',
+    'IPython.*',
+    'saneann.*',
+    'sentence_transformers.*',
+    'fasta2a.*',
+]
+ignore_missing_imports = true

@@ -5,7 +5,6 @@
 # (UPL) 1.0 (LICENSE-UPL or https://oss.oracle.com/licenses/upl), at your option.
 
 import logging
-import os
 import re
 import unittest
 from copy import deepcopy
@@ -31,6 +30,7 @@ from ..conftest import (
     OCI_REASONING_MODEL_API_KEY_CONFIG,
     compartment_id,
 )
+from ..env_utils import get_env_or_raise, should_skip_llm_test
 from ..testhelpers.testhelpers import retry_test
 from .test_models import CHAT_TEXT_PROMPT, REQUIRES_REASONING_PROMPT
 
@@ -49,9 +49,9 @@ def flow_with_oci_cohere(monkeypatch) -> Flow:  # type: ignore
     from wayflowcore.flowhelpers import create_single_step_flow
     from wayflowcore.steps import PromptExecutionStep
 
-    oracle_http_proxy = os.environ.get("ORACLE_HTTP_PROXY")
-    if not oracle_http_proxy:
-        raise Exception("ORACLE_HTTP_PROXY is not set in the environment")
+    oracle_http_proxy = get_env_or_raise("ORACLE_HTTP_PROXY", skip_check=should_skip_llm_test)
+    if oracle_http_proxy == "skipped":
+        pytest.skip("Skipping because ORACLE_HTTP_PROXY is missing")
     # no type hints for monkeypatch https://github.com/pytest-dev/pytest/issues/2712
     proxies = {
         "HTTP_PROXY": oracle_http_proxy,
@@ -409,6 +409,7 @@ def test_dedicated_model_forces_to_specify_provider(oci_agent_client_config):
 
 
 @retry_test(max_attempts=3)
+@pytest.mark.skipif(should_skip_llm_test(), reason="Skipping because LLM_API_URL is missing")
 def test_oci_model_has_exact_count_and_reasoning_tokens():
     """
     Failure rate:          0 out of 50

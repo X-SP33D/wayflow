@@ -32,7 +32,7 @@ from wayflowcore.tools import tool
 
 llm = VllmModel(
     model_id="meta-llama/Meta-Llama-3.1-8B-Instruct",
-    host_port=os.getenv("LLAMA_API_URL"),
+    host_port=os.getenv("LLAMA_API_URL", "http://dummy-skipped-host"),
 )
 
 # ============== Agent factory ==============
@@ -262,8 +262,9 @@ def create_server(agent_type: AgentType, host: str, port: int):
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def main(host: str, port: int, agent_type: AgentType):
     if agent_type == AgentType.ADK_AGENT:
-        from a2a.types import AgentCard
         from google.adk.a2a.utils.agent_to_a2a import to_a2a
+
+        from a2a.types import AgentCard
 
         my_agent_card = AgentCard(
             **{

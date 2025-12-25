@@ -7,6 +7,7 @@
 import os
 import ssl
 import subprocess
+import sys
 import time
 from typing import Optional, Tuple
 
@@ -102,7 +103,7 @@ def _start_mcp_server(
     ready_timeout_s: float = 10.0,
 ) -> Tuple[subprocess.Popen, str, LogTee]:
     process_args = [
-        "python",
+        sys.executable,
         "-u",  # unbuffered output
         _START_SERVER_FILE_PATH,
         "--host",

@@ -21,6 +21,7 @@ from wayflowcore.tracing.span import ConversationSpan
 from wayflowcore.tracing.spanprocessor import SimpleSpanProcessor
 from wayflowcore.tracing.trace import Trace, get_trace
 
+from ..env_utils import should_skip_llm_test
 from .conftest import InMemorySpanExporter, MyCustomSpan
 
 
@@ -210,6 +211,9 @@ def test_tracing_works_with_parallel_execution(
 
 
 def test_tracing_initial_messages_in_agent_conversation():
+    if should_skip_llm_test():
+        pytest.skip("Skipping because LLM_API_URL is missing")
+
     class DebugEventListener(EventListener):
         def __init__(self):
             super().__init__()

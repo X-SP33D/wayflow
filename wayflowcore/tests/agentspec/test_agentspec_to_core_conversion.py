@@ -16,6 +16,7 @@ from wayflowcore.executors.executionstatus import ExecutionStatus, FinishedStatu
 from wayflowcore.flow import Flow as RuntimeFlow
 from wayflowcore.tools.servertools import ServerTool
 
+from ..env_utils import should_skip_llm_test
 from ..testhelpers.testhelpers import retry_test
 
 from ..conftest import (  # isort:skip
@@ -127,6 +128,9 @@ def run_example(
     conversation_inputs: Dict[str, Any],
     sse_mcp_server_http,
 ):
+    if should_skip_llm_test():
+        pytest.skip("Skipping agentspec tests that use LLMs")
+
     loader = AgentSpecLoader(tool_registry=mock_tool_registry)
 
     gemma_endpoint = os.environ.get("GEMMA_API_URL")

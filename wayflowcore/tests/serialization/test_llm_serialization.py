@@ -24,14 +24,11 @@ from wayflowcore.serialization import autodeserialize, deserialize, serialize, s
 from wayflowcore.warnings import SecurityWarning
 
 from ..conftest import COHERE_OCI_API_KEY_CONFIG, DUMMY_OCI_USER_CONFIG_DICT
+from ..env_utils import get_env_or_raise
 
-llama_api_url = os.environ.get("LLAMA_API_URL")
-if not llama_api_url:
-    raise Exception("LLAMA_API_URL is not set in the environment")
+llama_api_url = get_env_or_raise("LLAMA_API_URL")
 
-compartment_id = os.environ.get("COMPARTMENT_ID")
-if not compartment_id:
-    raise Exception("COMPARTMENT_ID is not set in the environment")
+compartment_id = get_env_or_raise("COMPARTMENT_ID")
 # Note: These look like JSON format, but is YAML format, don't be confused!
 OPEN_AI_MODEL = '{model_type: openai, model_id: "gpt-3.5-turbo", _component_type: LlmModel}'
 VLLM_MODEL = (

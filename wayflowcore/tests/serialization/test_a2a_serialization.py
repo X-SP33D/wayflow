@@ -12,6 +12,7 @@ from wayflowcore.a2a.a2aagent import A2AAgent, A2AConnectionConfig
 from wayflowcore.executors._a2aagentconversation import A2AAgentConversation
 from wayflowcore.serialization import deserialize, serialize
 
+from ..env_utils import should_skip_llm_test
 from ..testhelpers.testhelpers import retry_test
 
 
@@ -82,6 +83,7 @@ def test_can_deserialize_a_serialized_a2aconversation(a2a_agent) -> None:
 
 
 @retry_test(max_attempts=4)
+@pytest.mark.skipif(should_skip_llm_test(), reason="Skipping because LLM_API_URL is missing")
 def test_can_continue_a_deserialized_a2aconversation(a2a_agent) -> None:
     """
     Failure rate:          0 out of 15

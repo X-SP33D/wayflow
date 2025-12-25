@@ -25,6 +25,8 @@ from wayflowcore.datastore.postgres import (
 from wayflowcore.property import FloatProperty, IntegerProperty, Property, StringProperty
 from wayflowcore.steps.step import Step
 
+from ..env_utils import should_skip_datastore_test
+
 
 def get_basic_office_entities():
     employees = Entity(
@@ -134,6 +136,9 @@ def all_oracle_mtls_connection_config_env_variables_are_specified():
 
 
 def get_oracle_connection_config():
+    if should_skip_datastore_test():
+        pytest.skip("Skipping datastore tests via env var")
+
     if all_oracle_mtls_connection_config_env_variables_are_specified():
         return MTlsOracleDatabaseConnectionConfig(
             config_dir=os.environ["ADB_CONFIG_DIR"],  # needed in the CI
@@ -167,6 +172,9 @@ def all_postgres_connection_config_env_variables_are_specified():
 
 
 def get_postgres_connection_config():
+    if should_skip_datastore_test():
+        pytest.skip("Skipping datastore tests via env var")
+
     if all_postgres_connection_config_env_variables_are_specified():
         return TlsPostgresDatabaseConnectionConfig(
             user=os.environ["POSTGRES_DB_USER"],
@@ -182,6 +190,9 @@ def get_postgres_connection_config():
 
 
 def get_tls_postgres_connection_config():
+    if should_skip_datastore_test():
+        pytest.skip("Skipping datastore tests via env var")
+
     if all_postgres_connection_config_env_variables_are_specified():
         return TlsPostgresDatabaseConnectionConfig(
             user=os.environ["POSTGRES_DB_USER"],
