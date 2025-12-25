@@ -32,7 +32,7 @@ from wayflowcore.tools import tool
 
 llm = VllmModel(
     model_id="meta-llama/Meta-Llama-3.1-8B-Instruct",
-    host_port=os.getenv("LLAMA_API_URL"),
+    host_port=os.getenv("LLAMA_API_URL", "http://dummy-skipped-host"),
 )
 
 # ============== Agent factory ==============

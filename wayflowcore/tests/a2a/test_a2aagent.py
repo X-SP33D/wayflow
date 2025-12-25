@@ -14,7 +14,11 @@ from wayflowcore.executors._a2aagentconversation import A2AAgentConversation
 from wayflowcore.executors._a2aagentexecutor import DEFAULT_RESPONSE
 from wayflowcore.messagelist import Message
 
+from ..env_utils import should_skip_llm_test
 from ..testhelpers.testhelpers import retry_test
+
+if should_skip_llm_test():
+    pytest.skip("Skipping A2A tests because LLM_API_URL is missing", allow_module_level=True)
 
 ####### Fixtures #######
 

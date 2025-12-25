@@ -45,6 +45,7 @@ from wayflowcore.tools import ServerTool
 from wayflowcore.variable import Variable
 from wayflowcore.warnings import SecurityWarning
 
+from ..env_utils import should_skip_llm_test
 from ..serialization.test_serializableobject import ALL_SERIALIZABLE_CLASSES
 
 EXCLUDED_COMPONENTS = {
@@ -406,6 +407,15 @@ def _validate_compatibility(obj):
 CLASSES_TO_RUN = list(
     sorted(ALL_AGENTSPEC_EXPORTABLE_CLASS + ALL_ADDITIONAL_SUBCLASSES, key=lambda x: x.__name__)
 )
+
+if should_skip_llm_test():
+    CLASSES_TO_RUN = [
+        cls
+        for cls in CLASSES_TO_RUN
+        if "OCIGenAI" not in cls.__name__
+        and "LlmModel" not in cls.__name__
+        and "Vllm" not in cls.__name__
+    ]
 
 
 @pytest.mark.filterwarnings(f"ignore:{_INMEMORY_USER_WARNING}:UserWarning")
