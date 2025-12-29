@@ -35,6 +35,8 @@ from wayflowcore.models.openaiapitype import OpenAIAPIType
 from wayflowcore.steps import OutputMessageStep
 from wayflowcore.tools import ToolRequest
 
+from .env_utils import get_env_or_raise, should_skip_llm_test
+
 if os.environ.get("DEBUG_LEVEL") == "info":
     logging.basicConfig(
         format="%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
@@ -51,41 +53,15 @@ else:
     logging.getLogger("wayflowcore").setLevel(logging.DEBUG)
 
 
-llama_api_url = os.environ.get("LLAMA_API_URL")
-if not llama_api_url:
-    raise Exception("LLAMA_API_URL is not set in the environment")
-
-oss_api_url = os.environ.get("OSS_API_URL")
-if not oss_api_url:
-    raise Exception("OSS_API_URL is not set in the environment")
-
-llama70b_api_url = os.environ.get("LLAMA70B_API_URL")
-if not llama70b_api_url:
-    raise Exception("LLAMA70B_API_URL is not set in the environment")
-
-ollama8bv31_api_url = os.environ.get("OLLAMA8BV32_API_URL")
-if not ollama8bv31_api_url:
-    raise Exception("OLLAMA8BV32_API_URL is not set in the environment")
-
-oci_reasoning_model_name = os.environ.get("OCI_REASONING_MODEL")
-if not oci_reasoning_model_name:
-    raise Exception("OCI_REASONING_MODEL is not set in the environment")
-
-gemma_api_url = os.environ.get("GEMMA_API_URL")
-if not gemma_api_url:
-    raise Exception("GEMMA_API_URL is not set in the environment")
-
-e5large_api_url = os.environ.get("E5largev2_EMBEDDING_API_URL")
-if not e5large_api_url:
-    raise ValueError("E5largev2_EMBEDDING_API_URL is not set in the environment")
-
-ollama_embedding_api_url = os.environ.get("OLLAMA_EMBEDDING_API_URL")
-if not ollama_embedding_api_url:
-    raise ValueError("OLLAMA_EMBEDDING_API_URL is not set in the environment")
-
-compartment_id = os.environ.get("COMPARTMENT_ID")
-if not compartment_id:
-    raise Exception("compartment_id is not set in the environment")
+llama_api_url = get_env_or_raise("LLAMA_API_URL")
+oss_api_url = get_env_or_raise("OSS_API_URL")
+llama70b_api_url = get_env_or_raise("LLAMA70B_API_URL")
+ollama8bv31_api_url = get_env_or_raise("OLLAMA8BV32_API_URL")
+oci_reasoning_model_name = get_env_or_raise("OCI_REASONING_MODEL")
+gemma_api_url = get_env_or_raise("GEMMA_API_URL")
+e5large_api_url = get_env_or_raise("E5largev2_EMBEDDING_API_URL", ValueError)
+ollama_embedding_api_url = get_env_or_raise("OLLAMA_EMBEDDING_API_URL", ValueError)
+compartment_id = get_env_or_raise("COMPARTMENT_ID")
 
 oracle_http_proxy = os.environ.get("ORACLE_HTTP_PROXY")
 
@@ -115,9 +91,7 @@ def pytest_sessionstart(session):
     load_dotenv()
 
 
-INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL = os.environ.get("INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL")
-if not INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL:
-    raise Exception("INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL is not set in the environment")
+INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL = get_env_or_raise("INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL")
 
 
 DUMMY_OCI_USER_CONFIG_DICT = {
@@ -345,7 +319,9 @@ with_all_llm_configs = pytest.mark.parametrize(
 # some functions require internet connection and make requests to remote LLMs.
 # the goal is to be able to skip tests that require them (which are probably long and expensive to run)
 # to run some quick unit tests
-SKIP_LLM_TESTS_ENV_VAR = "SKIP_LLM_TESTS"
+# some functions require internet connection and make requests to remote LLMs.
+# the goal is to be able to skip tests that require them (which are probably long and expensive to run)
+# to run some quick unit tests
 
 LLM_MOCKED_METHODS = [
     "wayflowcore.models.ocigenaimodel.OCIGenAIModel._init_client_if_needed",
@@ -403,10 +379,6 @@ def skip_test_fixture():
 def test_with_llm_fixture():
     if should_skip_llm_test():
         pytest.skip("Skipping test requiring a LLM")
-
-
-def should_skip_llm_test() -> bool:
-    return SKIP_LLM_TESTS_ENV_VAR in os.environ
 
 
 @pytest.fixture

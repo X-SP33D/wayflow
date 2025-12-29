@@ -1,0 +1,71 @@
+name: "CI Pipeline: Formatting, Linting, Typing, Security, and Tests (Wayflowcore)"
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+env:
+  SKIP_LLM_TESTS: "1"
+  SKIP_DATASTORE_TESTS: "1"
+
+jobs:
+  checks-and-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('wayflowcore/setup.py', 'wayflowcore/requirements-dev.txt', 'wayflowcore/constraints/constraints.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
+
+      - name: Install pyagentspec
+        run: BUILD_VERSION=26.1.0.dev5 pip install "git+https://github.com/oracle/agent-spec.git@ea02cc7#subdirectory=pyagentspec"
+
+
+      - name: Install wayflowcore packages and development dependencies
+        run: bash install-all-dev.sh
+
+      - name: Verify tools installation
+        run: |
+          python -m pip list | grep -E "black|isort|flake8|bandit|mypy"
+          which black isort flake8 bandit mypy
+
+      - name: "Black formatting check"
+        run: black --config wayflowcore/pyproject.toml --check wayflowcore/
+
+      - name: "Isort import sorting check"
+        run: isort --settings-path wayflowcore/pyproject.toml --check-only wayflowcore/
+
+      # Skipping flake8 for Python 3.14 due to old flake8 version incompatibility
+      - name: "Flake8 linter checks"
+        if: matrix.python-version != '3.14'
+        run: flake8 --select C801 wayflowcore/
+
+      - name: "Flake8 copyright checks"
+        if: matrix.python-version != '3.14'
+        run: flake8 --select C801 --copyright-check --copyright-regexp="# Copyright © [0-9]{4}(, [0-9]{4})* Oracle and/or its affiliates.\n#\n# This software is under the Apache License 2.0\n# \(LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0\) or Universal Permissive License\n# \(UPL\) 1.0 \(LICENSE-UPL or https://oss.oracle.com/licenses/upl\), at your option." wayflowcore/
+
+      # - name: "Bandit security checks"
+      #   run: bandit -c bandit.yaml -r wayflowcore/
+
+      - name: "Mypy static type checking"
+        run: mypy wayflowcore/ --config-file wayflowcore/pyproject.toml --exclude wayflowcore/tests_fuzz
+
+      - name: "Run tests"
+        working-directory: wayflowcore
+        run: pytest tests

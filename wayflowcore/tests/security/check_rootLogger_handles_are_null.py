@@ -41,6 +41,9 @@ def import_all_of_wayflowcore():
 
     llama_api_url = os.environ.get("LLAMA_API_URL")
     if not llama_api_url:
+        if os.environ.get("SKIP_LLM_TESTS"):
+            print("Skipping import_all_of_wayflowcore because SKIP_LLM_TESTS is set")
+            return
         raise Exception("LLAMA_API_URL is not set in the environment")
     # Run and serialize/deserialize a simple agent
     llm = LlmModelFactory.from_config(

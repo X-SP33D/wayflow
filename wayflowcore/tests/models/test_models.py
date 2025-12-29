@@ -50,6 +50,7 @@ from ..conftest import (
     VLLM_MODEL_CONFIG,
     VLLM_OSS_CONFIG,
 )
+from ..env_utils import get_env_or_raise
 from ..testhelpers.dummy import DummyModel
 from ..testhelpers.patching import patch_openai_compatible_llm
 from ..testhelpers.testhelpers import retry_test
@@ -140,9 +141,7 @@ DUMMY_CONFIG = {
     },
 }
 
-INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL = os.environ.get("INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL")
-if not INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL:
-    raise Exception("INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL is not set in the environment")
+INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL = get_env_or_raise("INSTANCE_PRINCIPAL_ENDPOINT_BASE_URL")
 
 
 @tool

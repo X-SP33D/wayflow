@@ -6,6 +6,7 @@
 
 import os
 import subprocess
+import sys
 import time
 from typing import Tuple
 
@@ -32,7 +33,7 @@ def _check_server_is_up(url: str) -> bool:
 def _start_otel_server(host: str, port: int) -> Tuple[subprocess.Popen, str]:
     process = subprocess.Popen(
         [
-            "python",
+            sys.executable,
             _START_SERVER_FILE_PATH,
             "--host",
             host,

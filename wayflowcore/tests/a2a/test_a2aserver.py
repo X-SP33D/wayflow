@@ -14,7 +14,11 @@ import requests
 from fasta2a.schema import FileWithBytes
 from requests import Response
 
+from ..env_utils import should_skip_llm_test
 from ..testhelpers.testhelpers import retry_test
+
+if should_skip_llm_test():
+    pytest.skip("Skipping A2A tests because LLM_API_URL is missing", allow_module_level=True)
 from .start_a2a_server import AgentType
 
 
